@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analytics Dashboard Widget — v2 (Refined)</title>
+<style>
+  :root {
+    --bg: #EEF1F6;
+    --surface: #FFFFFF;
+    --ink: #17212B;
+    --muted: #4C596B;
+    --line: #DCE2EB;
+    --accent: #0F7B6C;
+    --accent-soft: #E1F1EE;
+    --warn: #B84334;
+    --warn-soft: #FBE9E6;
+    --focus: #1857D6;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    padding: clamp(16px, 4vw, 40px);
+  }
+  .dashboard { max-width: 1040px; margin: 0 auto; }
+
+  .topbar { margin-bottom: 20px; }
+  .topbar h1 { font-size: clamp(20px, 3vw, 26px); margin: 0 0 4px; letter-spacing: -0.01em; }
+  .topbar p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    margin-bottom: 20px;
+  }
+  .search-field {
+    flex: 1 1 220px; position: relative;
+  }
+  .search-field input {
+    width: 100%; padding: 10px 12px 10px 34px; border: 1px solid var(--line);
+    border-radius: 8px; font-size: 14px; background: var(--surface); color: var(--ink);
+  }
+  .search-field svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: 0.55; }
+
+  .chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--muted); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--accent-soft); color: var(--accent); border-color: var(--accent);
+  }
+  .chip:hover { border-color: var(--accent); }
+
+  /* Accessible focus state — visible on keyboard nav, all interactive elements */
+  .chip:focus-visible,
+  .search-field input:focus-visible,
+  .user-card:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .user-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px; min-width: 0; /* allows children to shrink instead of overflowing */
+  }
+  .user-card .name {
+    font-weight: 700; font-size: 15px; margin: 0 0 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .user-card .email {
+    font-size: 12.5px; color: var(--muted); margin: 0 0 12px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .user-card .stat-row { display: flex; align-items: baseline; justify-content: space-between; }
+  .user-card .stat {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 21px; font-weight: 600;
+  }
+  .user-card .status {
+    font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 5px;
+  }
+  .status.active { background: var(--accent-soft); color: var(--accent); }
+  .status.inactive { background: var(--warn-soft); color: var(--warn); }
+
+  .table-wrap {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 460px; }
+  th, td {
+    text-align: left; padding: 12px 16px; font-size: 13.5px;
+    border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: none; }
+  tr:last-child td { border-bottom: none; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  @media (max-width: 420px) {
+    .controls { flex-direction: column; align-items: stretch; }
+    .chip-group { justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="topbar">
+    <h1>User analytics</h1>
+    <p>Session activity across your workspace, updated live.</p>
+  </div>
+
+  <div class="controls">
+    <div class="search-field">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4C596B" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <label for="user-search" class="sr-only">Search users by name or email</label>
+      <input id="user-search" type="text" placeholder="Search users by name or email" autocomplete="off">
+    </div>
+    <div class="chip-group" role="group" aria-label="Filter users by status">
+      <button class="chip" type="button" aria-pressed="true" data-status="all">All</button>
+      <button class="chip" type="button" aria-pressed="false" data-status="active">Active</button>
+      <button class="chip" type="button" aria-pressed="false" data-status="inactive">Inactive</button>
+      <button class="chip" type="button" aria-pressed="false" data-status="trial">Trial</button>
+    </div>
+  </div>
+
+  <div class="card-grid" id="card-grid" aria-live="polite"></div>
+
+  <div class="table-wrap">
+    <table>
+      <caption class="sr-only">Detailed session log by user</caption>
+      <thead>
+        <tr><th scope="col">User</th><th scope="col">Sessions</th><th scope="col">Status</th></tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const users = [
+    { name: "Alexandra Montgomery-Whitfield", email: "alexandra.montgomery@enterprise-solutions.com", sessions: 1204, status: "active" },
+    { name: "Chen Wei", email: "chen.wei@example.com", sessions: 842, status: "active" },
+    { name: "Priya Sharma", email: "priya.sharma@example.com", sessions: 1988, status: "trial" },
+    { name: "Diego Fernandez", email: "diego.fernandez@example.com", sessions: 356, status: "inactive" },
+    { name: "Owen Bramwell-Sato", email: "owen.bramwell.sato@example.com", sessions: 92, status: "inactive" },
+    { name: "Mei Lin", email: "mei.lin@example.com", sessions: 1502, status: "active" },
+  ];
+
+  const grid = document.getElementById('card-grid');
+  const tableBody = document.getElementById('table-body');
+  const searchInput = document.getElementById('user-search');
+  const chips = Array.from(document.querySelectorAll('.chip'));
+  let activeStatus = 'all';
+
+  function render() {
+    const query = searchInput.value.trim().toLowerCase();
+    const filtered = users.filter(u => {
+      const matchesStatus = activeStatus === 'all' || u.status === activeStatus;
+      const matchesQuery = !query || u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query);
+      return matchesStatus && matchesQuery;
+    });
+
+    grid.innerHTML = filtered.map(u => `
+      <div class="user-card" tabindex="0" aria-label="${u.name}, ${u.sessions} sessions, ${u.status}">
+        <p class="name" title="${u.name}">${u.name}</p>
+        <p class="email" title="${u.email}">${u.email}</p>
+        <div class="stat-row">
+          <span class="stat">${u.sessions.toLocaleString()}</span>
+          <span class="status ${u.status === 'active' ? 'active' : 'inactive'}">${u.status}</span>
+        </div>
+      </div>
+    `).join('') || '<p style="color:#4C596B; font-size:14px;">No users match your search.</p>';
+
+    tableBody.innerHTML = filtered.map(u => `
+      <tr>
+        <td>${u.name}</td>
+        <td>${u.sessions.toLocaleString()}</td>
+        <td>${u.status}</td>
+      </tr>
+    `).join('');
+  }
+
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => c.setAttribute('aria-pressed', 'false'));
+      chip.setAttribute('aria-pressed', 'true');
+      activeStatus = chip.dataset.status;
+      render();
+    });
+  });
+
+  searchInput.addEventListener('input', render);
+  render();
+</script>
+</body>
+</html>

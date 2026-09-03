@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Analytics Dashboard Widget — v1 (Initial AI Generation)</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #fafafa; margin: 0; padding: 24px; }
+  .dashboard { width: 960px; margin: 0 auto; } /* FLAW #1 source: fixed width, no responsiveness */
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .search-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+  .search-bar input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 300px; }
+  .filter-chip {
+    padding: 8px 14px; background: #f0f0f0; color: #bbbbbb; /* FLAW #2 source: low contrast text */
+    border-radius: 16px; cursor: pointer; font-size: 13px;
+  } /* FLAW #2 source: this is a <div>, not a <button> — no keyboard focus, no tabindex, no aria-pressed */
+  .filter-chip.active { background: #d6e4ff; color: #ccd9f5; }
+  .card-grid {
+    display: flex; /* FLAW #1 source: flex with fixed children, no wrap-friendly sizing */
+    gap: 16px;
+  }
+  .user-card {
+    width: 220px; background: #fff; border: 1px solid #eee; border-radius: 8px;
+    padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .user-card h3, .user-card p {
+    white-space: nowrap; overflow: hidden; /* FLAW #1 source: hard clip, no ellipsis, no wrap */
+  }
+  .stat { font-size: 22px; font-weight: bold; margin-top: 8px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+  th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="topbar">
+    <h2>User Analytics</h2>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" placeholder="Search users...">
+    <div class="filter-chip active" onclick="filter('active')">Active</div>
+    <div class="filter-chip" onclick="filter('inactive')">Inactive</div>
+    <div class="filter-chip" onclick="filter('trial')">Trial</div>
+  </div>
+
+  <div class="card-grid">
+    <div class="user-card">
+      <h3>Alexandra Montgomery-Whitfield</h3>
+      <p>alexandra.montgomery@enterprise-solutions.com</p>
+      <div class="stat">1,204</div>
+    </div>
+    <div class="user-card">
+      <h3>Chen Wei</h3>
+      <p>chen.wei@example.com</p>
+      <div class="stat">842</div>
+    </div>
+    <div class="user-card">
+      <h3>Priya Sharma</h3>
+      <p>priya.sharma@example.com</p>
+      <div class="stat">1,988</div>
+    </div>
+    <div class="user-card">
+      <h3>Diego Fernandez</h3>
+      <p>diego.fernandez@example.com</p>
+      <div class="stat">356</div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>User</th><th>Sessions</th><th>Status</th></tr>
+    <tr><td>Alexandra Montgomery-Whitfield</td><td>1,204</td><td>Active</td></tr>
+    <tr><td>Chen Wei</td><td>842</td><td>Active</td></tr>
+  </table>
+</div>
+
+<script>
+function filter(type) {
+  console.log('filtering by', type);
+}
+</script>
+</body>
+</html>
